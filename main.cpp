@@ -40,7 +40,7 @@ vector<long int> array;  // arrays to be sorted
 long int* arrPtr = nullptr;
 
 
-vector<THREAD> threadList;
+vector<THREAD*> threadList;
 
 // comparator for qsort()
 int cmpfunc (const void * a, const void * b) {
@@ -83,6 +83,7 @@ void psrs() {
     for (int i = 0; i < P - 1; i++) {
         THREAD* tptr = allocateTHREAD(th[i],  i, startBound);
         startBound += (N/P);
+        threadList.push_back(tptr);
         if (pthread_create(&th[i], NULL, &ThreadFunc, tptr) != 0) {
             perror("pthread create failed");
             exit(1);
@@ -90,6 +91,7 @@ void psrs() {
     }
     THREAD* tptr = allocateTHREAD(th[P - 1], P - 1, startBound);
     tptr->endIdx = N - 1;
+    threadList.push_back(tptr);
     if (pthread_create(&th[P - 1], NULL, &ThreadFunc, tptr) != 0) {
         perror("pthread create failed");
         exit(1);
@@ -120,16 +122,17 @@ void phase1(int tindex, int startIdx, int endIdx) {
     int w = N/pow(P, 2);
     int idxEnd = (P - 1)* w;
     int regularSampleSize = endIdx - startIdx;   // upper bound for sample size is N/P
-    threadList[tindex].localSample = new long int[regularSampleSize];
+    
+    (threadList[tindex])->localSample = new long int[regularSampleSize];
 
     int sampleSize = 0;
     for (int i = idx0; i < endIdx; i += (w)) {
         long int sample = arrPtr[i];
-        threadList[tindex].localSample[sampleSize]  = sample;
-        threadList[tindex].localSampleLen = sampleSize + 1;
+        (threadList[tindex])->localSample[sampleSize]  = sample;
+        (threadList[tindex])->localSampleLen = sampleSize + 1;
         sampleSize ++;
     }
-    printPhase1Samples(tindex, threadList[tindex].localSample, threadList[tindex].localSampleLen);
+    printPhase1Samples(tindex, (threadList[tindex])->localSample, (threadList[tindex])->localSampleLen);
 }
 
 void phase2() {
