@@ -126,15 +126,15 @@ void phase1(int tindex, int startIdx, int endIdx) {
     int idxEnd = (P - 1)* w;
     int regularSampleSize = endIdx - startIdx;   // upper bound for sample size is N/P
     
-    (threadList[tindex])->localSample = new long int[regularSampleSize];
+    //(threadList[tindex])->localSample = new long int[regularSampleSize];
     
      
      
     int sampleSize = 0;
     for (int i = idx0; i < endIdx; i += (w)) {
         long int sample = arrPtr[i];
-        (threadList[tindex])->localSample[sampleSize]  = sample;
-        (threadList[tindex])->localSampleLen = sampleSize + 1;
+        //(threadList[tindex])->localSample[sampleSize]  = sample;
+        //(threadList[tindex])->localSampleLen = sampleSize + 1;
 
 
         sampleArray[(tindex*P) + sampleSize] = sample;  // inplace sapmle array
@@ -164,7 +164,7 @@ void generateData() {
         arrPtr[i] = random();
     }
 }
-
+//
 void generateDatahardCode() {
     N = 36;
     P = 3;
@@ -184,13 +184,6 @@ void printArray() {
     //}
     for (int i = 0; i < N; i++) {
         cout << arrPtr[i] << " ";
-    }
-    cout << "\n";
-}
-void printPhase1Samples(int tindex, long int* samples, int len) {
-    printf("threadID %d phase1samples are \n", tindex);
-    for (int i = 0; i < len; i++) {
-        cout << samples[i] << " ";
     }
     cout << "\n";
 }

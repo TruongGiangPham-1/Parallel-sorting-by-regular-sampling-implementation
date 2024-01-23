@@ -17,7 +17,6 @@ void* ThreadFunc(void* arg);
 int isSorted(int start, int end); // chekc if array between the range is sorted
 THREAD* allocateTHREAD(pthread_t tid, int tindex, int startIdx);
 
-void printPhase1Samples(int tindex, long int* samples, int len);
 
 
 void printGlobalSamples();  // print the sampleArray global array
