@@ -38,7 +38,7 @@ int P = -1;
 pthread_barrier_t barrier;
 vector<long int> array;  // arrays to be sorted
 long int* arrPtr = nullptr;
-
+long int* sampleArray = nullptr;  // the global regular sample array
 
 vector<THREAD*> threadList;
 
@@ -55,6 +55,10 @@ void* ThreadFunc(void* arg) {
     phase1(threadConfig->threadIndex, threadConfig->startIdx, threadConfig->endIdx);
     pthread_barrier_wait(&barrier);  
     // only proceeds if P number of threads call pthread_barrier_wait()
+    //
+    //
+    phase2(threadConfig->threadIndex);
+    pthread_barrier_wait(&barrier);
 
     delete ((THREAD*)arg)->localSample;
     delete (THREAD*)arg;
@@ -72,9 +76,7 @@ THREAD* allocateTHREAD(pthread_t tid, int tindex, int startBound) {
     return tptr;
 }
 
-                        
 void psrs() {
-    
     pthread_t th[P];
     pthread_barrier_init(&barrier, NULL, P);  // p threads exclude mainthread P + 1 for mainthread too but mainthread has to call barrier_wait()
     int startBound = 0;
@@ -89,6 +91,7 @@ void psrs() {
             exit(1);
         }
     }
+
     THREAD* tptr = allocateTHREAD(th[P - 1], P - 1, startBound);
     tptr->endIdx = N - 1;
     threadList.push_back(tptr);
@@ -117,31 +120,44 @@ void phase1(int tindex, int startIdx, int endIdx) {
     qsort(arrPtr + startIdx, endIdx - startIdx + 1, sizeof(long int),  cmpfunc);
     isSorted(startIdx,  endIdx);
 
-    // regular sample index 0, w, 2w, ... , (p - 1)w
+    // regular sample index 0, w, 2w, ... , (p - 1)w      [total of s=p samples]
     int idx0 = startIdx;
     int w = N/pow(P, 2);
     int idxEnd = (P - 1)* w;
     int regularSampleSize = endIdx - startIdx;   // upper bound for sample size is N/P
     
     (threadList[tindex])->localSample = new long int[regularSampleSize];
-
+    
+     
+     
     int sampleSize = 0;
     for (int i = idx0; i < endIdx; i += (w)) {
         long int sample = arrPtr[i];
         (threadList[tindex])->localSample[sampleSize]  = sample;
         (threadList[tindex])->localSampleLen = sampleSize + 1;
+
+
+        sampleArray[(tindex*P) + sampleSize] = sample;  // inplace sapmle array
+
         sampleSize ++;
+        if (i == i + w) {  // case: when w == 0, happens when N/P^2 = 0
+            break;
+        }
     }
-    printPhase1Samples(tindex, (threadList[tindex])->localSample, (threadList[tindex])->localSampleLen);
+    //printPhase1Samples(tindex, (threadList[tindex])->localSample, (threadList[tindex])->localSampleLen);
 }
 
-void phase2() {
+void phase2(int tindex) {
+    if (tindex == 0) {
+        printGlobalSamples();
+    }
     // need 
 }
 
 // generate and populate array of size N
 void generateData() {
     arrPtr = new long int[N];
+    sampleArray = new long int[P*P];  // generate s*p samples, assume that s == p
     srandom(time(nullptr));
     for (int i = 0; i < N; i++) {
         array.push_back(random());
@@ -153,6 +169,7 @@ void generateDatahardCode() {
     N = 36;
     P = 3;
     arrPtr = new long int[N];
+    sampleArray = new long int[P*P];  // generate s*p samples, assume that s == p
     int arr[36] = {16, 2, 17, 24, 33, 28, 30, 1, 0, 27, 9, 25
            , 34, 23, 19, 18, 11, 7, 21, 13, 8, 35, 12, 29, 
            6, 3, 4, 14, 22, 15, 32, 10, 26, 31, 20, 5};
@@ -177,6 +194,15 @@ void printPhase1Samples(int tindex, long int* samples, int len) {
     }
     cout << "\n";
 }
+
+void printGlobalSamples() {
+    printf("global samples array from phase 1\n");
+    for (int i = 0; i < P*P; i++) {
+        cout << sampleArray[i] << " ";
+    }
+    cout << "\n";
+}
+
 
 int isSorted(int start, int end)  {
     for (int i = start + 1; i <= end; i++) {
@@ -209,5 +235,6 @@ int main(int argc, char* argv[]) {
     printArray();
     isSorted(0, N - 1);
     delete[] arrPtr;
+    delete[] sampleArray;
     return 0;
 }
