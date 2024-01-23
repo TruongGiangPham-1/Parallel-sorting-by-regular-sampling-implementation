@@ -205,15 +205,16 @@ void phase3(int tindex) {
             threadList[partition]->partitionIndices[tindex][0] = currParitionBegin; 
             threadList[partition]->partitionIndices[tindex][1] = currPartitionEnd; 
             
-            if (partition == 2) {
-                printf("thread %d sending parition to thread %d, begin=%d, end=%d\n", tindex, partition, currParitionBegin, currPartitionEnd);
-            }
             pIdx ++;
             partition ++;
             currParitionBegin = i;  // begin at next partition
         }
-
     }
+    // send the last partition
+    assert(partition == P - 1);  // last partition
+
+    threadList[partition]->partitionIndices[tindex][0] = currParitionBegin; 
+    threadList[partition]->partitionIndices[tindex][1] = endIdx; 
 }
 
 // generate and populate array of size N
@@ -280,8 +281,8 @@ void printPartition(int tindex) {
         // p partitions
         int begin = t->partitionIndices[i][0];
         int end = t->partitionIndices[i][1];
-        //printArray(arrPtr, begin, end);
-        printf("begin: %d  end: %d\n", begin, end);
+        printArray(arrPtr, begin, end);
+        //printf("begin: %d  end: %d\n", begin, end);
     }
 }
 
