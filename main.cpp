@@ -39,6 +39,7 @@ pthread_barrier_t barrier;
 vector<long int> array;  // arrays to be sorted
 long int* arrPtr = nullptr;
 long int* sampleArray = nullptr;  // the global regular sample array
+long int* pivots = nullptr;
 
 vector<THREAD*> threadList;
 
@@ -60,8 +61,11 @@ void* ThreadFunc(void* arg) {
     phase2(threadConfig->threadIndex);
     pthread_barrier_wait(&barrier);
 
-    delete ((THREAD*)arg)->localSample;
     delete (THREAD*)arg;
+    for (int i = 0; i < P; i++) {
+        delete[] ((THREAD*)arg)->partitionIndices[i];
+    }
+    delete[] ((THREAD*)arg)->partitionIndices;
     return (void*)NULL;
 }
 
@@ -72,7 +76,13 @@ THREAD* allocateTHREAD(pthread_t tid, int tindex, int startBound) {
     tptr->startIdx = startBound;
     tptr->endIdx = startBound + N/P - 1;  // -1 here just for 0 base index
     tptr->localSampleLen = 0;
-    tptr->localSample = nullptr;
+
+
+    // allocate (P, 2) mattrix
+    tptr->partitionIndices = new long int*[P]; 
+    for (int i = 0; i < P; i++) {
+        tptr->partitionIndices[i] = new long int[2];
+    }
     return tptr;
 }
 
@@ -113,12 +123,13 @@ void psrs() {
     return;
 }
 
+
 void phase1(int tindex, int startIdx, int endIdx) {
     // need start, end index of the array that it is in charge of
     // queck sort
     // qsort(base addr, num element, size, cmp)
     qsort(arrPtr + startIdx, endIdx - startIdx + 1, sizeof(long int),  cmpfunc);
-    isSorted(startIdx,  endIdx);
+    isSorted(arrPtr, startIdx,  endIdx);
 
     // regular sample index 0, w, 2w, ... , (p - 1)w      [total of s=p samples]
     int idx0 = startIdx;
@@ -134,7 +145,7 @@ void phase1(int tindex, int startIdx, int endIdx) {
     for (int i = idx0; i < endIdx; i += (w)) {
         long int sample = arrPtr[i];
         //(threadList[tindex])->localSample[sampleSize]  = sample;
-        //(threadList[tindex])->localSampleLen = sampleSize + 1;
+        (threadList[tindex])->localSampleLen = sampleSize + 1;
 
 
         sampleArray[(tindex*P) + sampleSize] = sample;  // inplace sapmle array
@@ -150,8 +161,24 @@ void phase1(int tindex, int startIdx, int endIdx) {
 void phase2(int tindex) {
     if (tindex == 0) {
         printGlobalSamples();
+        // sort and sample the pivots
+        qsort(sampleArray, P*P, sizeof(long int), cmpfunc);
+        isSorted(sampleArray, 0, P*P - 1);
+
+        // sample pivots (p + p/2, 2p + p/2, 3p + p/2, ...., (p-1)p + p/2)  total of P - 1 pivots
+        pivots = new long int[P - 1];
+
+        int pho = P/2;
+        for (int i = 0; i < P - 1; i++) {
+            pivots[i] = sampleArray[(i + 1)*(P) + pho - 1];
+        }
+        printPivots();
     }
-    // need 
+}
+
+void phase3(int tindex) {
+    // compute the index range of the partitions for other Processes
+    THREAD* t = threadList[tindex];
 }
 
 // generate and populate array of size N
@@ -188,6 +215,14 @@ void printArray() {
     cout << "\n";
 }
 
+void printPivots() {
+    printf("print pivots\n");
+    for (int i = 0; i < P - 1; i++) {
+        cout << pivots[i] << " ";
+    }
+    cout << "\n";
+}
+
 void printGlobalSamples() {
     printf("global samples array from phase 1\n");
     for (int i = 0; i < P*P; i++) {
@@ -197,9 +232,9 @@ void printGlobalSamples() {
 }
 
 
-int isSorted(int start, int end)  {
+int isSorted(long int* arr, int start, int end)  {
     for (int i = start + 1; i <= end; i++) {
-        assert(arrPtr[i] > arrPtr[i - 1]);
+        assert(arr[i] > arr[i - 1]);
     }
     return 0;
 }
@@ -226,7 +261,7 @@ int main(int argc, char* argv[]) {
     psrs();
     printf("array after sort\n");
     printArray();
-    isSorted(0, N - 1);
+    isSorted(arrPtr, 0, N - 1);
     delete[] arrPtr;
     delete[] sampleArray;
     return 0;

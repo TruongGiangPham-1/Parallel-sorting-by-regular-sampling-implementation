@@ -10,8 +10,11 @@ typedef struct THREAD{
     int endIdx;   // end index of the arrya they are in cahrage of
     //
     // phase 1 info
-    long int* localSample;  // sample in phase 2
     int localSampleLen; // length of local sample array
+
+    // phase 3 info;
+    long int**partitionIndices;  // dim=(P - 1, 2) matrix of [[start, end], [start2, end2], [start3, end3]]. the start end pos of each partition
+    // assigned to this process
 } THREAD;
 
 #endif // !
