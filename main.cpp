@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cassert>
 #include <cstdio>
 #include <cstdlib>
@@ -61,11 +62,20 @@ void* ThreadFunc(void* arg) {
     phase2(threadConfig->threadIndex);
     pthread_barrier_wait(&barrier);
 
-    delete (THREAD*)arg;
+
+    phase3(threadConfig->threadIndex);
+    pthread_barrier_wait(&barrier);
+
+    printPartition(threadConfig->threadIndex);
+
+
+    // here all thread have moved their partitions
+
     for (int i = 0; i < P; i++) {
         delete[] ((THREAD*)arg)->partitionIndices[i];
     }
     delete[] ((THREAD*)arg)->partitionIndices;
+    delete (THREAD*)arg;
     return (void*)NULL;
 }
 
@@ -179,6 +189,31 @@ void phase2(int tindex) {
 void phase3(int tindex) {
     // compute the index range of the partitions for other Processes
     THREAD* t = threadList[tindex];
+    int startIdx = t->startIdx;
+    int endIdx = t->endIdx;
+
+    int partition = 0;  // pivots used == threadIndex the current partition belongs to
+    int pIdx = 0;  // pivot used
+
+
+    int currParitionBegin = startIdx;
+    int currPartitionEnd = -1;
+    for (int i = startIdx + 1 ; i <= endIdx; i++) {
+        if (arrPtr[i] > pivots[pIdx] && arrPtr[i - 1] <= pivots[pIdx]) {
+            currPartitionEnd = i - 1;
+            // send this partition to foreignThread
+            threadList[partition]->partitionIndices[tindex][0] = currParitionBegin; 
+            threadList[partition]->partitionIndices[tindex][1] = currPartitionEnd; 
+            
+            if (partition == 2) {
+                printf("thread %d sending parition to thread %d, begin=%d, end=%d\n", tindex, partition, currParitionBegin, currPartitionEnd);
+            }
+            pIdx ++;
+            partition ++;
+            currParitionBegin = i;  // begin at next partition
+        }
+
+    }
 }
 
 // generate and populate array of size N
@@ -187,7 +222,7 @@ void generateData() {
     sampleArray = new long int[P*P];  // generate s*p samples, assume that s == p
     srandom(time(nullptr));
     for (int i = 0; i < N; i++) {
-        array.push_back(random());
+        //array.push_back(random());
         arrPtr[i] = random();
     }
 }
@@ -198,7 +233,7 @@ void generateDatahardCode() {
     arrPtr = new long int[N];
     sampleArray = new long int[P*P];  // generate s*p samples, assume that s == p
     int arr[36] = {16, 2, 17, 24, 33, 28, 30, 1, 0, 27, 9, 25
-           , 34, 23, 19, 18, 11, 7, 21, 13, 8, 35, 12, 29, 
+           ,34, 23, 19, 18, 11, 7, 21, 13, 8, 35, 12, 29, 
            6, 3, 4, 14, 22, 15, 32, 10, 26, 31, 20, 5};
     for (int i = 0; i < N; i++) {
         arrPtr[i] = arr[i];
@@ -215,6 +250,13 @@ void printArray() {
     cout << "\n";
 }
 
+void printArray(long int* arr, int begin, int end) {
+    for (int i = begin; i <= end; i++) {
+        cout << arr[i] << " ";
+    }
+    cout << "\n"; 
+}
+
 void printPivots() {
     printf("print pivots\n");
     for (int i = 0; i < P - 1; i++) {
@@ -229,6 +271,18 @@ void printGlobalSamples() {
         cout << sampleArray[i] << " ";
     }
     cout << "\n";
+}
+
+void printPartition(int tindex) {
+    THREAD* t = threadList[tindex];
+    cout << "printint parition for thread " << tindex << "\n";
+    for (int i = 0; i < P; i++) {
+        // p partitions
+        int begin = t->partitionIndices[i][0];
+        int end = t->partitionIndices[i][1];
+        //printArray(arrPtr, begin, end);
+        printf("begin: %d  end: %d\n", begin, end);
+    }
 }
 
 

@@ -19,7 +19,9 @@ THREAD* allocateTHREAD(pthread_t tid, int tindex, int startIdx);
 
 
 void printArray();
+void printArray(long int* arr, int begin, int end);
 void printPivots();
 void printGlobalSamples();  // print the sampleArray global array
+void printPartition(int tindex);
 
 #endif // !DECL_H_
