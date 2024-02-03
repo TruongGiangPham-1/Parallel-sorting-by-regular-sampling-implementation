@@ -57,7 +57,7 @@ int cmpfunc (const void * a, const void * b) {
 void* ThreadFunc(void* arg) {
     THREAD* threadConfig = ((THREAD*) arg);
     
-    printf("in threadindex %d, start=%d, end=%d\n", threadConfig->threadIndex, threadConfig->startIdx, threadConfig->endIdx);
+    //printf("in threadindex %d, start=%d, end=%d\n", threadConfig->threadIndex, threadConfig->startIdx, threadConfig->endIdx);
 
     phase1(threadConfig->threadIndex, threadConfig->startIdx, threadConfig->endIdx);
     pthread_barrier_wait(&barrier);  
@@ -466,6 +466,8 @@ void printTime(unsigned long ** times) {
     }
     printf("Phase4 time is %lu\n", p4Time / P);
 
+
+    printf("total time is %lu\n", p1Time/P + p2Time + p3Time/P + p4Time/P);
 }
 
 // create main function that takes in n and p as input
@@ -475,13 +477,15 @@ void printTime(unsigned long ** times) {
 */
 int main(int argc, char* argv[]) {
     
-    printf("%d\n", argc);
+    //printf("%d\n", argc);
     assert(argc == 3);
-    printf("argument n=%d, p=%d\n", atoi(argv[1]), atoi(argv[2]));
+    //printf("argument n=%d, p=%d\n", atoi(argv[1]), atoi(argv[2]));
     
     
     N = atoi(argv[1]);
     P = atoi(argv[2]);
+    
+    printf("%d CORES\n", P);
     times = new unsigned long*[P];  // times[P][0] = phase 1 time of P=1, 
     for (int i = 0; i < P; i++) {
         times[i] = new unsigned long[4];
