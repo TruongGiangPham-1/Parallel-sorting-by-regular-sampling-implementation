@@ -16,6 +16,8 @@ typedef struct THREAD{
     long int**partitionIndices;  // dim=(P, 2) matrix of [[start, end], [start2, end2], [start3, end3]]. the start end pos of each partition
     // partitionIndices[i, :] = [start, end] range given to this THREAD by process i
     // if threadIndex == i, then 
+
+    int partitionSize;
 } THREAD;
 
 #endif // !

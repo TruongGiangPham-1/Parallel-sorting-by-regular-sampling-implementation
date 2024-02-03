@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <cassert>
+#include <climits>
 #include <cstdio>
 #include <cstdlib>
 #include <iostream>
@@ -20,6 +21,8 @@
 using namespace std;
 
 
+#define BEGIN 0
+#define END 1
 
 // define global
 int N = -1;
@@ -68,8 +71,11 @@ void* ThreadFunc(void* arg) {
 
     printPartition(threadConfig->threadIndex);
 
-
+    phase4(threadConfig->threadIndex);
+    pthread_barrier_wait(&barrier);
+    
     // here all thread have moved their partitions
+
 
     for (int i = 0; i < P; i++) {
         delete[] ((THREAD*)arg)->partitionIndices[i];
@@ -92,6 +98,8 @@ THREAD* allocateTHREAD(pthread_t tid, int tindex, int startBound) {
     tptr->partitionIndices = new long int*[P]; 
     for (int i = 0; i < P; i++) {
         tptr->partitionIndices[i] = new long int[2];
+        tptr->partitionIndices[i][0] = -1;
+        tptr->partitionIndices[i][1] = -1;
     }
     return tptr;
 }
@@ -217,10 +225,94 @@ void phase3(int tindex) {
     threadList[partition]->partitionIndices[tindex][1] = endIdx; 
 }
 
+void phase4(int tindex) {
+    // k ways merge sort
+    // naive running time is O(KN) k = number of paritions = P doesnt matter if we use heap to k way merge O(log(k) N) since K is snmall
+    //
+    THREAD* t = threadList[tindex];
+
+    int elementLeft = 0;
+    for (int i = 0; i < P; i++) {
+        if (t->partitionIndices[i][END] >=0 && t->partitionIndices[i][BEGIN] >= 0) {
+            elementLeft += (t->partitionIndices[i][END] - t->partitionIndices[i][BEGIN]) + 1;
+        }
+    }
+
+    int elementTotal = elementLeft;
+    t->partitionSize = elementTotal;
+
+    int idx = 0;
+    long int* localFinalArray = new long int[elementTotal];  // local sorted array
+    while (elementLeft > 0) {
+        long int min = getMinHead(t);
+
+        localFinalArray[idx] = min;
+        idx ++;
+        elementLeft --;
+    }
+    assert(getMinHead(t) == -1);  // no more element so this should return -1
+    printf("printint sorted partition THREAD %d\n", t->threadIndex);
+    printArray(localFinalArray, 0, elementTotal - 1);
+
+    pthread_barrier_wait(&barrier);
+
+
+    mergeToBig(localFinalArray, elementTotal, t);
+    delete[] localFinalArray;
+    return;
+}
+
+// return min head from k list and increment the head pointer of those found, return -1 if all k list are used
+long int getMinHead(THREAD* t) {
+    // out of k arrays, return the one with smallest
+
+    long int min = LONG_LONG_MAX;
+    long int config[2] = {-1, -1};  // {headement, whichpartition}
+
+    for (int i = 0; i < P; i++) {
+
+        int idx = t->partitionIndices[i][BEGIN];
+        // we are done with this partition
+        if (t->partitionIndices[i][BEGIN] > t->partitionIndices[i][END]) {
+            continue;
+        }
+
+        if (min > arrPtr[idx]) {
+            min = arrPtr[idx];
+            config[0] = min;
+            config[1] = i;
+        }
+    }
+    
+    if (config[0] >= 0) {
+        // there was a valid min
+        int whichP = config[1];
+        t->partitionIndices[whichP][0] ++;  // move up the head pointer for this partition
+        
+    }
+    return config[0];  // return the minium
+
+}
+
+void mergeToBig(long int * a, int size, THREAD *t) {
+    int startIdx = 0;
+
+    for (int i = 0; i < t->threadIndex; i++) {
+        startIdx += threadList[i]->partitionSize; 
+    }
+    printf("mergeing thread %d startpost is %d\n", t->threadIndex, startIdx);
+
+    for (int i = startIdx; i < startIdx + size; i++) {
+        arrPtr[i] = a[i - startIdx];
+    } 
+    return;
+}
+
 // generate and populate array of size N
 void generateData() {
     arrPtr = new long int[N];
     sampleArray = new long int[P*P];  // generate s*p samples, assume that s == p
+    finalArray = new long int[N];
     srandom(time(nullptr));
     for (int i = 0; i < N; i++) {
         //array.push_back(random());
@@ -233,6 +325,7 @@ void generateDatahardCode() {
     P = 3;
     arrPtr = new long int[N];
     sampleArray = new long int[P*P];  // generate s*p samples, assume that s == p
+    finalArray = new long int[N];
     int arr[36] = {16, 2, 17, 24, 33, 28, 30, 1, 0, 27, 9, 25
            ,34, 23, 19, 18, 11, 7, 21, 13, 8, 35, 12, 29, 
            6, 3, 4, 14, 22, 15, 32, 10, 26, 31, 20, 5};
@@ -246,16 +339,18 @@ void printArray() {
     //    cout << v << " ";
     //}
     for (int i = 0; i < N; i++) {
-        cout << arrPtr[i] << " ";
+        //cout << arrPtr[i] << " ";
+        printf("%ld ", arrPtr[i]);
     }
-    cout << "\n";
+    printf("\n");
 }
 
 void printArray(long int* arr, int begin, int end) {
     for (int i = begin; i <= end; i++) {
-        cout << arr[i] << " ";
+        //cout << arr[i] << " ";
+        printf("%ld ", (long int)arr[i]);
     }
-    cout << "\n"; 
+    printf("\n");
 }
 
 void printPivots() {
@@ -276,7 +371,7 @@ void printGlobalSamples() {
 
 void printPartition(int tindex) {
     THREAD* t = threadList[tindex];
-    cout << "printint parition for thread " << tindex << "\n";
+    printf("printing partition for thread %d\n", tindex);
     for (int i = 0; i < P; i++) {
         // p partitions
         int begin = t->partitionIndices[i][0];
@@ -308,14 +403,14 @@ int main(int argc, char* argv[]) {
     
     N = atoi(argv[1]);
     P = atoi(argv[2]);
-    //generateData();
-    generateDatahardCode();
+    generateData();
+    //generateDatahardCode();
 
     printf("array before sort\n");
-    printArray();
+    printArray(arrPtr, 0, N - 1);
     psrs();
     printf("array after sort\n");
-    printArray();
+    //printArray(finalArray, 0, N - 1);
     isSorted(arrPtr, 0, N - 1);
     delete[] arrPtr;
     delete[] sampleArray;
