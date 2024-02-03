@@ -27,4 +27,7 @@ void printPivots();
 void printGlobalSamples();  // print the sampleArray global array
 void printPartition(int tindex);
 
+
+void printTime(unsigned long** times);
+
 #endif // !DECL_H_

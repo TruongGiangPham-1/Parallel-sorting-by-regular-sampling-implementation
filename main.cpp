@@ -15,7 +15,7 @@
 #include <random>
 #include <time.h>
 #include "THREAD.h"
-
+#include <sys/time.h>		/* needed for the gettimeofday() system call */
 
 
 using namespace std;
@@ -44,6 +44,8 @@ vector<long int> array;  // arrays to be sorted
 long int* arrPtr = nullptr;
 long int* sampleArray = nullptr;  // the global regular sample array
 long int* pivots = nullptr;
+
+unsigned long** times = nullptr;
 
 vector<THREAD*> threadList;
 
@@ -142,10 +144,18 @@ void psrs() {
 }
 
 
+// https://people.cs.rutgers.edu/~pxk/416/notes/c-tutorials/times.html
 void phase1(int tindex, int startIdx, int endIdx) {
     // need start, end index of the array that it is in charge of
     // queck sort
     // qsort(base addr, num element, size, cmp)
+
+    struct timeval start;	/* starting time */
+	struct timeval end;	/* ending time */
+	unsigned long e_usec;	/* elapsed microseconds */
+
+    gettimeofday(&start, 0);
+
     qsort(arrPtr + startIdx, endIdx - startIdx + 1, sizeof(long int),  cmpfunc);
     isSorted(arrPtr, startIdx,  endIdx);
 
@@ -173,11 +183,23 @@ void phase1(int tindex, int startIdx, int endIdx) {
             break;
         }
     }
+
+
     //printPhase1Samples(tindex, (threadList[tindex])->localSample, (threadList[tindex])->localSampleLen);
+    gettimeofday(&end, 0);
+    e_usec = ((end.tv_sec * 1000000) + end.tv_usec) - ((start.tv_sec * 1000000) + start.tv_usec);
+    times[tindex][0] = e_usec;
 }
 
 void phase2(int tindex) {
     if (tindex == 0) {
+        struct timeval start;	/* starting time */
+        struct timeval end;	/* ending time */
+        unsigned long e_usec;	/* elapsed microseconds */
+
+        gettimeofday(&start, 0);
+        
+
         //printGlobalSamples();
         // sort and sample the pivots
         qsort(sampleArray, P*P, sizeof(long int), cmpfunc);
@@ -191,10 +213,24 @@ void phase2(int tindex) {
             pivots[i] = sampleArray[(i + 1)*(P) + pho - 1];
         }
         //printPivots();
+        //
+        gettimeofday(&end, 0);
+        
+        e_usec = ((end.tv_sec * 1000000) + end.tv_usec) - ((start.tv_sec * 1000000) + start.tv_usec);
+        times[tindex][1] = e_usec;
     }
 }
 
 void phase3(int tindex) {
+    struct timeval start;	/* starting time */
+    struct timeval end;	/* ending time */
+    unsigned long e_usec;	/* elapsed microseconds */
+
+    gettimeofday(&start, 0);
+
+
+
+
     // compute the index range of the partitions for other Processes
     THREAD* t = threadList[tindex];
     int startIdx = t->startIdx;
@@ -223,9 +259,21 @@ void phase3(int tindex) {
 
     threadList[partition]->partitionIndices[tindex][0] = currParitionBegin; 
     threadList[partition]->partitionIndices[tindex][1] = endIdx; 
+
+
+
+    gettimeofday(&end, 0);
+    e_usec = ((end.tv_sec * 1000000) + end.tv_usec) - ((start.tv_sec * 1000000) + start.tv_usec);
+    times[tindex][2] = e_usec;
 }
 
 void phase4(int tindex) {
+    struct timeval start;	/* starting time */
+    struct timeval end;	/* ending time */
+    unsigned long e_usec;	/* elapsed microseconds */
+
+    gettimeofday(&start, 0);
+
     // k ways merge sort
     // naive running time is O(KN) k = number of paritions = P doesnt matter if we use heap to k way merge O(log(k) N) since K is snmall
     //
@@ -258,6 +306,14 @@ void phase4(int tindex) {
 
 
     mergeToBig(localFinalArray, elementTotal, t);
+
+
+    
+    gettimeofday(&end, 0);
+    e_usec = ((end.tv_sec * 1000000) + end.tv_usec) - ((start.tv_sec * 1000000) + start.tv_usec);
+    times[tindex][3] = e_usec;
+    
+
     delete[] localFinalArray;
     return;
 }
@@ -387,6 +443,31 @@ int isSorted(long int* arr, int start, int end)  {
     return 0;
 }
 
+
+void printTime(unsigned long ** times) {
+    unsigned long p1Time = 0;
+    for (int i = 0; i < P; i++) {
+        p1Time += times[i][0];
+    }
+    printf("Phase1 time is %lu\n", p1Time / P);
+
+    unsigned long p2Time = 0;
+    printf("Phase2 time is %lu\n", times[0][1]);
+
+    unsigned long p3Time = 0;
+    for (int i = 0; i < P; i++) {
+        p3Time += times[i][2];
+    }
+    printf("Phase3 time is %lu\n", p3Time / P);
+
+    unsigned long p4Time = 0;
+    for (int i = 0; i < P; i++) {
+        p4Time += times[i][3];
+    }
+    printf("Phase4 time is %lu\n", p4Time / P);
+
+}
+
 // create main function that takes in n and p as input
 /*
 *   ./a.out n p
@@ -401,17 +482,30 @@ int main(int argc, char* argv[]) {
     
     N = atoi(argv[1]);
     P = atoi(argv[2]);
+    times = new unsigned long*[P];  // times[P][0] = phase 1 time of P=1, 
+    for (int i = 0; i < P; i++) {
+        times[i] = new unsigned long[4];
+    }
+
     generateData();
     //generateDatahardCode();
 
     //printf("array before sort\n");
     //printArray(arrPtr, 0, N - 1);
     psrs();
-
     //printf("array after sort\n");
     //printArray(finalArray, 0, N - 1);
-    isSorted(arrPtr, 0, N - 1);
+    //isSorted(arrPtr, 0, N - 1);
+    //
+    //
+    printTime(times);
+
     delete[] arrPtr;
     delete[] sampleArray;
+    for (int i = 0; i < P; i++) {
+        delete[] times[i];
+    }
+    delete[] times;
+
     return 0;
 }
