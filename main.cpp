@@ -69,7 +69,7 @@ void* ThreadFunc(void* arg) {
     phase3(threadConfig->threadIndex);
     pthread_barrier_wait(&barrier);
 
-    printPartition(threadConfig->threadIndex);
+    //printPartition(threadConfig->threadIndex);
 
     phase4(threadConfig->threadIndex);
     pthread_barrier_wait(&barrier);
@@ -178,7 +178,7 @@ void phase1(int tindex, int startIdx, int endIdx) {
 
 void phase2(int tindex) {
     if (tindex == 0) {
-        printGlobalSamples();
+        //printGlobalSamples();
         // sort and sample the pivots
         qsort(sampleArray, P*P, sizeof(long int), cmpfunc);
         isSorted(sampleArray, 0, P*P - 1);
@@ -190,7 +190,7 @@ void phase2(int tindex) {
         for (int i = 0; i < P - 1; i++) {
             pivots[i] = sampleArray[(i + 1)*(P) + pho - 1];
         }
-        printPivots();
+        //printPivots();
     }
 }
 
@@ -251,8 +251,8 @@ void phase4(int tindex) {
         elementLeft --;
     }
     assert(getMinHead(t) == -1);  // no more element so this should return -1
-    printf("printint sorted partition THREAD %d\n", t->threadIndex);
-    printArray(localFinalArray, 0, elementTotal - 1);
+    //printf("printint sorted partition THREAD %d\n", t->threadIndex);
+    //printArray(localFinalArray, 0, elementTotal - 1);
 
     pthread_barrier_wait(&barrier);
 
@@ -300,7 +300,7 @@ void mergeToBig(long int * a, int size, THREAD *t) {
     for (int i = 0; i < t->threadIndex; i++) {
         startIdx += threadList[i]->partitionSize; 
     }
-    printf("mergeing thread %d startpost is %d\n", t->threadIndex, startIdx);
+    //printf("mergeing thread %d startpost is %d\n", t->threadIndex, startIdx);
 
     for (int i = startIdx; i < startIdx + size; i++) {
         arrPtr[i] = a[i - startIdx];
@@ -312,7 +312,6 @@ void mergeToBig(long int * a, int size, THREAD *t) {
 void generateData() {
     arrPtr = new long int[N];
     sampleArray = new long int[P*P];  // generate s*p samples, assume that s == p
-    finalArray = new long int[N];
     srandom(time(nullptr));
     for (int i = 0; i < N; i++) {
         //array.push_back(random());
@@ -325,7 +324,6 @@ void generateDatahardCode() {
     P = 3;
     arrPtr = new long int[N];
     sampleArray = new long int[P*P];  // generate s*p samples, assume that s == p
-    finalArray = new long int[N];
     int arr[36] = {16, 2, 17, 24, 33, 28, 30, 1, 0, 27, 9, 25
            ,34, 23, 19, 18, 11, 7, 21, 13, 8, 35, 12, 29, 
            6, 3, 4, 14, 22, 15, 32, 10, 26, 31, 20, 5};
@@ -384,7 +382,7 @@ void printPartition(int tindex) {
 
 int isSorted(long int* arr, int start, int end)  {
     for (int i = start + 1; i <= end; i++) {
-        assert(arr[i] > arr[i - 1]);
+        assert(arr[i] >= arr[i - 1]);
     }
     return 0;
 }
@@ -406,10 +404,11 @@ int main(int argc, char* argv[]) {
     generateData();
     //generateDatahardCode();
 
-    printf("array before sort\n");
-    printArray(arrPtr, 0, N - 1);
+    //printf("array before sort\n");
+    //printArray(arrPtr, 0, N - 1);
     psrs();
-    printf("array after sort\n");
+
+    //printf("array after sort\n");
     //printArray(finalArray, 0, N - 1);
     isSorted(arrPtr, 0, N - 1);
     delete[] arrPtr;
