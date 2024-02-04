@@ -1,6 +1,0 @@
-16 CORES
-Phase1 time is 2413507
-Phase2 time is 49
-Phase3 time is 35757
-Phase4 time is 2449889
-total time is 78386484

@@ -1,0 +1,246 @@
+Running './a.out' with N=80000000 and P=1 (Iteration 1)
+1 CORES
+Phase1 time is 21604114
+Phase2 time is 11
+Phase3 time is 289121
+Phase4 time is 1933770
+total time is 23827005
+Running './a.out' with N=80000000 and P=1 (Iteration 2)
+1 CORES
+Phase1 time is 21851448
+Phase2 time is 14
+Phase3 time is 324882
+Phase4 time is 1978640
+total time is 24154970
+Running './a.out' with N=80000000 and P=1 (Iteration 3)
+1 CORES
+Phase1 time is 21884334
+Phase2 time is 14
+Phase3 time is 288779
+Phase4 time is 1949900
+total time is 24123013
+Running './a.out' with N=80000000 and P=1 (Iteration 4)
+1 CORES
+Phase1 time is 21838994
+Phase2 time is 12
+Phase3 time is 288805
+Phase4 time is 1944733
+total time is 24072532
+Running './a.out' with N=80000000 and P=1 (Iteration 5)
+1 CORES
+Phase1 time is 21695022
+Phase2 time is 12
+Phase3 time is 289301
+Phase4 time is 1933006
+total time is 23917329
+Running './a.out' with N=80000000 and P=2 (Iteration 1)
+2 CORES
+Phase1 time is 10624679
+Phase2 time is 15
+Phase3 time is 295315
+Phase4 time is 3419352
+total time is 14339346
+Running './a.out' with N=80000000 and P=2 (Iteration 2)
+2 CORES
+Phase1 time is 21174777
+Phase2 time is 94
+Phase3 time is 170361
+Phase4 time is 1739466
+total time is 23084604
+Running './a.out' with N=80000000 and P=2 (Iteration 3)
+2 CORES
+Phase1 time is 11354523
+Phase2 time is 30
+Phase3 time is 253484
+Phase4 time is 2336195
+total time is 13944202
+Running './a.out' with N=80000000 and P=2 (Iteration 4)
+2 CORES
+Phase1 time is 11966584
+Phase2 time is 58
+Phase3 time is 133661
+Phase4 time is 1581926
+total time is 13682171
+Running './a.out' with N=80000000 and P=2 (Iteration 5)
+2 CORES
+Phase1 time is 10911967
+Phase2 time is 48
+Phase3 time is 133212
+Phase4 time is 1512133
+total time is 12557312
+Running './a.out' with N=80000000 and P=4 (Iteration 1)
+4 CORES
+Phase1 time is 5142641
+Phase2 time is 15
+Phase3 time is 72883
+Phase4 time is 2446438
+total time is 7661962
+Running './a.out' with N=80000000 and P=4 (Iteration 2)
+4 CORES
+Phase1 time is 5057206
+Phase2 time is 52
+Phase3 time is 89419
+Phase4 time is 2870364
+total time is 8016989
+Running './a.out' with N=80000000 and P=4 (Iteration 3)
+4 CORES
+Phase1 time is 5118561
+Phase2 time is 25
+Phase3 time is 63726
+Phase4 time is 2824418
+total time is 8006705
+Running './a.out' with N=80000000 and P=4 (Iteration 4)
+4 CORES
+Phase1 time is 5046159
+Phase2 time is 58
+Phase3 time is 84836
+Phase4 time is 2886809
+total time is 8017804
+Running './a.out' with N=80000000 and P=4 (Iteration 5)
+4 CORES
+Phase1 time is 5079800
+Phase2 time is 22
+Phase3 time is 86103
+Phase4 time is 3062754
+total time is 8228657
+Running './a.out' with N=80000000 and P=8 (Iteration 1)
+8 CORES
+Phase1 time is 2384477
+Phase2 time is 14
+Phase3 time is 36687
+Phase4 time is 1611467
+total time is 4032631
+Running './a.out' with N=80000000 and P=8 (Iteration 2)
+8 CORES
+Phase1 time is 2393930
+Phase2 time is 14
+Phase3 time is 40678
+Phase4 time is 1325086
+total time is 3759694
+Running './a.out' with N=80000000 and P=8 (Iteration 3)
+8 CORES
+Phase1 time is 2399067
+Phase2 time is 11
+Phase3 time is 45897
+Phase4 time is 1334205
+total time is 3779169
+Running './a.out' with N=80000000 and P=8 (Iteration 4)
+8 CORES
+Phase1 time is 2389654
+Phase2 time is 13
+Phase3 time is 36340
+Phase4 time is 1542481
+total time is 3968475
+Running './a.out' with N=80000000 and P=8 (Iteration 5)
+8 CORES
+Phase1 time is 2408032
+Phase2 time is 15
+Phase3 time is 36475
+Phase4 time is 1497635
+total time is 3942142
+Running './a.out' with N=80000000 and P=16, (Iteration 1)
+16 CORES
+Phase1 time is 1193500
+Phase2 time is 50
+Phase3 time is 28602
+Phase4 time is 963662
+total time is 2185764
+Running './a.out' with N=80000000 and P=16, (Iteration 2)
+16 CORES
+Phase1 time is 1198304
+Phase2 time is 47
+Phase3 time is 27218
+Phase4 time is 986615
+total time is 2212137
+Running './a.out' with N=80000000 and P=16, (Iteration 3)
+16 CORES
+Phase1 time is 1188321
+Phase2 time is 53
+Phase3 time is 30909
+Phase4 time is 1002803
+total time is 2222033
+Running './a.out' with N=80000000 and P=16, (Iteration 4)
+16 CORES
+Phase1 time is 1194959
+Phase2 time is 42
+Phase3 time is 32579
+Phase4 time is 868970
+total time is 2096508
+Running './a.out' with N=80000000 and P=16, (Iteration 5)
+16 CORES
+Phase1 time is 1175828
+Phase2 time is 46
+Phase3 time is 35481
+Phase4 time is 995350
+total time is 2206659
+Running './a.out' with N=80000000 and P=32, (Iteration 1)
+32 CORES
+Phase1 time is 623650
+Phase2 time is 94
+Phase3 time is 25390
+Phase4 time is 637863
+total time is 1286903
+Running './a.out' with N=80000000 and P=32, (Iteration 2)
+32 CORES
+Phase1 time is 618653
+Phase2 time is 95
+Phase3 time is 24015
+Phase4 time is 638878
+total time is 1281546
+Running './a.out' with N=80000000 and P=32, (Iteration 3)
+32 CORES
+Phase1 time is 617040
+Phase2 time is 116
+Phase3 time is 25783
+Phase4 time is 639716
+total time is 1282539
+Running './a.out' with N=80000000 and P=32, (Iteration 4)
+32 CORES
+Phase1 time is 626307
+Phase2 time is 92
+Phase3 time is 33163
+Phase4 time is 681867
+total time is 1341337
+Running './a.out' with N=80000000 and P=32, (Iteration 5)
+32 CORES
+Phase1 time is 612292
+Phase2 time is 109
+Phase3 time is 27078
+Phase4 time is 681917
+total time is 1321287
+Running './a.out' with N=80000000 and P=64 (Iteration 1)
+64 CORES
+Phase1 time is 373174
+Phase2 time is 354
+Phase3 time is 25427
+Phase4 time is 819729
+total time is 1218330
+Running './a.out' with N=80000000 and P=64 (Iteration 2)
+64 CORES
+Phase1 time is 369989
+Phase2 time is 358
+Phase3 time is 35925
+Phase4 time is 799336
+total time is 1205250
+Running './a.out' with N=80000000 and P=64 (Iteration 3)
+64 CORES
+Phase1 time is 370595
+Phase2 time is 350
+Phase3 time is 26416
+Phase4 time is 1069182
+total time is 1466193
+Running './a.out' with N=80000000 and P=64 (Iteration 4)
+64 CORES
+Phase1 time is 372088
+Phase2 time is 367
+Phase3 time is 35994
+Phase4 time is 805726
+total time is 1213808
+Running './a.out' with N=80000000 and P=64 (Iteration 5)
+64 CORES
+Phase1 time is 370297
+Phase2 time is 366
+Phase3 time is 27747
+Phase4 time is 810168
+total time is 1208212
+
