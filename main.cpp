@@ -451,7 +451,7 @@ void printTime(unsigned long ** times) {
     }
     printf("Phase1 time is %lu\n", p1Time / P);
 
-    unsigned long p2Time = 0;
+    unsigned long p2Time = times[0][1];
     printf("Phase2 time is %lu\n", times[0][1]);
 
     unsigned long p3Time = 0;
