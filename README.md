@@ -1,4 +1,4 @@
-Implementation of Parallel sorting by regular sorting algorithm proposed by Li et al.
+Implementation of Parallel sorting by regular sorting algorithm proposed by Li et al. Did benchmark on 128 cores machine to experiment with the results in the paper.
 
 https://www.sciencedirect.com/science/article/pii/016781919390019H
 
