@@ -1,3 +1,17 @@
+/*
+# ------------------------------
+# Implementation of parrallel sorting by regular sampling by Li et al
+# https://www.sciencedirect.com/science/article/pii/016781919390019H
+#  tested for Speed up with up to 512 million keys and 64 cores
+# 
+#  Compile with:  g++ main.cpp -O  -lpthread        (no check for warnings)
+#
+#  Usage:  
+#       ./a.out N P  (N is number of elemets in the array, and P is number of processors)
+#
+#  Author: Truong-Giang Pham
+# ------------------------------
+*/
 #include <algorithm>
 #include <cassert>
 #include <climits>
@@ -56,11 +70,10 @@ int cmpfunc (const void * a, const void * b) {
 /*  
  *  Desc: pthread function that runs in parallel amongt P processors
  *
- *  phase1: divide the array into N/P elements parititoin and assign each partition to each P threads. Do a Qsort on it.
- *  phase2: each thread will sample P - 1 elements as Pivots from their local parition(contains N/P elements from phase 1)
+ *  phase1: divide the array into N/P elements parititoin and assign each partition to each P threads. Do a Qsort on it. sample S elements for phase 2
+ *  phase2: each thread will sample P - 1 elements as Pivots from their local sample computed in phase 1
  *  phase3: each thread furthur split the local parition into P partitions. keep 1 part and send p - 1 partitions to all the other threads for them to process in Phase 4  
  *  phase4: do a P way merge from all the partitions received from other threads, and all thread write it to the final sorted array
- *
  *
  */
 void* ThreadFunc(void* arg) {
@@ -123,6 +136,7 @@ THREAD* allocateTHREAD(pthread_t tid, int tindex, int startBound) {
     return tptr;
 }
 
+// fire up P threads
 void psrs() {
     pthread_t th[P];
     pthread_barrier_init(&barrier, NULL, P);  // p threads exclude mainthread P + 1 for mainthread too but mainthread has to call barrier_wait()
