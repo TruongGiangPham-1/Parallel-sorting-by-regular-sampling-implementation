@@ -21,12 +21,12 @@
 using namespace std;
 
 
-#define BEGIN 0
+#define BEGIN 0    
 #define END 1
 
 // define global
-int N = -1;
-int P = -1;
+int N = -1;   // the number of array to be sorted
+int P = -1;  // the number of thread to run
 
 
 
@@ -39,21 +39,30 @@ int P = -1;
 //
 //} THREAD;
 
-pthread_barrier_t barrier;
-vector<long int> array;  // arrays to be sorted
-long int* arrPtr = nullptr;
-long int* sampleArray = nullptr;  // the global regular sample array
-long int* pivots = nullptr;
+pthread_barrier_t barrier;         // barrier to synchronize all threads between each phase of the algorithm0
+long int* arrPtr = nullptr;        // pointer to array to be sorted
+long int* sampleArray = nullptr;   // the global regular sample array(used in phase 2)
+long int* pivots = nullptr;        // pivots that are sampled        (used in phase 2)
 
-unsigned long** times = nullptr;
+unsigned long** times = nullptr;   // times[i] = [starttime, endtime]  of phase i
 
-vector<THREAD*> threadList;
+vector<THREAD*> threadList;        // array to manage each Thread. threadList.size() == P
 
 // comparator for qsort()
 int cmpfunc (const void * a, const void * b) {
    return ( *(long int*)a - *(long int*)b );
 }
 
+/*  
+ *  Desc: pthread function that runs in parallel amongt P processors
+ *
+ *  phase1: divide the array into N/P elements parititoin and assign each partition to each P threads. Do a Qsort on it.
+ *  phase2: each thread will sample P - 1 elements as Pivots from their local parition(contains N/P elements from phase 1)
+ *  phase3: each thread furthur split the local parition into P partitions. keep 1 part and send p - 1 partitions to all the other threads for them to process in Phase 4  
+ *  phase4: do a P way merge from all the partitions received from other threads, and all thread write it to the final sorted array
+ *
+ *
+ */
 void* ThreadFunc(void* arg) {
     THREAD* threadConfig = ((THREAD*) arg);
     
@@ -79,6 +88,7 @@ void* ThreadFunc(void* arg) {
     // here all thread have moved their partitions
 
 
+    // free all pointers
     for (int i = 0; i < P; i++) {
         delete[] ((THREAD*)arg)->partitionIndices[i];
     }
@@ -87,6 +97,13 @@ void* ThreadFunc(void* arg) {
     return (void*)NULL;
 }
 
+/*
+ * create a struct to represent a thread.
+ * arg:
+ *    tid: the operating system's thread ID returned from pthread_create()
+ *    tindex: the index into threadList vector. we use this index to determine which thread are we
+ *    startBound: the start index into the array to indicate this thread is responsible from this start index to endIdx
+ */
 THREAD* allocateTHREAD(pthread_t tid, int tindex, int startBound) {
     THREAD* tptr = new THREAD;
     tptr->threadIndex = tindex;
@@ -145,6 +162,13 @@ void psrs() {
 
 
 // https://people.cs.rutgers.edu/~pxk/416/notes/c-tutorials/times.html
+/*
+ * phase 1 of the algorithm
+ * arg: 
+ *     tindex: the thread that we are running
+ *     startIdx, endIdx: represent the local paritiion bound that this thread is responsible for
+ *
+ */
 void phase1(int tindex, int startIdx, int endIdx) {
     // need start, end index of the array that it is in charge of
     // queck sort
@@ -170,6 +194,7 @@ void phase1(int tindex, int startIdx, int endIdx) {
      
      
     int sampleSize = 0;
+    // sample s elements from the local parition
     for (int i = idx0; i < endIdx; i += (w)) {
         long int sample = arrPtr[i];
         //(threadList[tindex])->localSample[sampleSize]  = sample;
@@ -185,12 +210,19 @@ void phase1(int tindex, int startIdx, int endIdx) {
     }
 
 
-    //printPhase1Samples(tindex, (threadList[tindex])->localSample, (threadList[tindex])->localSampleLen);
     gettimeofday(&end, 0);
+    // record time 
     e_usec = ((end.tv_sec * 1000000) + end.tv_usec) - ((start.tv_sec * 1000000) + start.tv_usec);
     times[tindex][0] = e_usec;
 }
 
+
+/*
+ * phase 2 of the algorithm
+ * arg: 
+ *     tindex: the thread that we are running
+ *
+ */
 void phase2(int tindex) {
     if (tindex == 0) {
         struct timeval start;	/* starting time */
@@ -202,7 +234,7 @@ void phase2(int tindex) {
 
         //printGlobalSamples();
         // sort and sample the pivots
-        qsort(sampleArray, P*P, sizeof(long int), cmpfunc);
+        qsort(sampleArray, P*P, sizeof(long int), cmpfunc);  // srt the sample array computed in phase 1
         isSorted(sampleArray, 0, P*P - 1);
 
         // sample pivots (p + p/2, 2p + p/2, 3p + p/2, ...., (p-1)p + p/2)  total of P - 1 pivots
@@ -210,17 +242,22 @@ void phase2(int tindex) {
 
         int pho = P/2;
         for (int i = 0; i < P - 1; i++) {
-            pivots[i] = sampleArray[(i + 1)*(P) + pho - 1];
+            pivots[i] = sampleArray[(i + 1)*(P) + pho - 1];  // sample pivots from samplearray
         }
-        //printPivots();
         //
         gettimeofday(&end, 0);
-        
+        // record time 
         e_usec = ((end.tv_sec * 1000000) + end.tv_usec) - ((start.tv_sec * 1000000) + start.tv_usec);
         times[tindex][1] = e_usec;
     }
 }
 
+/*
+ * phase 3 of the algorithm
+ * arg: 
+ *     tindex: the thread that we are running
+ *
+ */
 void phase3(int tindex) {
     struct timeval start;	/* starting time */
     struct timeval end;	/* ending time */
@@ -231,7 +268,9 @@ void phase3(int tindex) {
 
 
 
-    // compute the index range of the partitions for other Processes
+    // furthur split the local parition of each thread into P paritions based on pivots computed in phase 2 , 
+    // and assign to other threads
+    // I do this by computing P  index ranges(currParitionBegin, currPartitionEnd), and update other thread's Struct
     THREAD* t = threadList[tindex];
     int startIdx = t->startIdx;
     int endIdx = t->endIdx;
@@ -245,7 +284,7 @@ void phase3(int tindex) {
     for (int i = startIdx + 1 ; i <= endIdx; i++) {
         if (arrPtr[i] > pivots[pIdx] && arrPtr[i - 1] <= pivots[pIdx]) {
             currPartitionEnd = i - 1;
-            // send this partition to foreignThread
+            // send this partition range to foreignThread
             threadList[partition]->partitionIndices[tindex][0] = currParitionBegin; 
             threadList[partition]->partitionIndices[tindex][1] = currPartitionEnd; 
             
@@ -267,6 +306,12 @@ void phase3(int tindex) {
     times[tindex][2] = e_usec;
 }
 
+/*
+ * phase 4 of the algorithm
+ * arg: 
+ *     tindex: the thread that we are running
+ *
+ */
 void phase4(int tindex) {
     struct timeval start;	/* starting time */
     struct timeval end;	/* ending time */
@@ -275,8 +320,7 @@ void phase4(int tindex) {
     gettimeofday(&start, 0);
 
     // k ways merge sort
-    // naive running time is O(KN) k = number of paritions = P doesnt matter if we use heap to k way merge O(log(k) N) since K is snmall
-    //
+    // naive running time is O(KN) k = number of paritions = P doesnt matter if I use heap to k way merge O(log(k) N) since K is snmall
     THREAD* t = threadList[tindex];
 
     int elementLeft = 0;
@@ -305,7 +349,8 @@ void phase4(int tindex) {
     pthread_barrier_wait(&barrier);
 
 
-    mergeToBig(localFinalArray, elementTotal, t);
+    // write the locally sorted array(size N/P) into the final array(size N)
+    mergeToBig(localFinalArray, elementTotal, t);  
 
 
     
@@ -318,7 +363,13 @@ void phase4(int tindex) {
     return;
 }
 
-// return min head from k list and increment the head pointer of those found, return -1 if all k list are used
+/*
+ * return min head from k list and increment the head pointer of those found, return -1 if all k list are used
+ * arg:
+ *     t: the thread struct thats we are on
+ * return:
+ *    the minimum element amongst head of k lists
+ */
 long int getMinHead(THREAD* t) {
     // out of k arrays, return the one with smallest
 
@@ -350,6 +401,13 @@ long int getMinHead(THREAD* t) {
 
 }
 
+/*
+ * given locally sorted array a(size N/P), write it to the globally sorted array (size N)
+ * arg: 
+ *     a: the locally sorted array. size N/P
+ *     size: the exact size of the locally sorted array
+ *     t: the thread struct that we are on
+ */
 void mergeToBig(long int * a, int size, THREAD *t) {
     int startIdx = 0;
 
@@ -374,7 +432,7 @@ void generateData() {
         arrPtr[i] = random();
     }
 }
-//
+// for testing on small elements
 void generateDatahardCode() {
     N = 36;
     P = 3;
@@ -492,16 +550,7 @@ int main(int argc, char* argv[]) {
     }
 
     generateData();
-    //generateDatahardCode();
-
-    //printf("array before sort\n");
-    //printArray(arrPtr, 0, N - 1);
-    psrs();
-    //printf("array after sort\n");
-    //printArray(finalArray, 0, N - 1);
-    //isSorted(arrPtr, 0, N - 1);
-    //
-    //
+    psrs();  // run parallel sort with P threads
     printTime(times);
 
     delete[] arrPtr;
